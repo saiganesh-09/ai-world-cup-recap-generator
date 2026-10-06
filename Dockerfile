@@ -19,7 +19,10 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-ENV NEXT_TELEMETRY_DISABLED=1
+# Build-time env — only needs to pass validation; no DB connection happens.
+ENV NEXT_TELEMETRY_DISABLED=1 \
+    DATABASE_URL="postgresql://build:build@localhost:5432/build" \
+    NEXT_PUBLIC_APP_URL="http://localhost:3000"
 RUN npx prisma generate && npm run build
 
 # ── Runtime ──────────────────────────────────────────────────────────
