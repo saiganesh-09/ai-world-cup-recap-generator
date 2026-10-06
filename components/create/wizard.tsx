@@ -42,6 +42,7 @@ export interface WizardPlayer {
   position: string;
   jerseyNumber: number;
   teamName: string;
+  teamShortName: string;
 }
 
 const STEPS = ["Tournament", "Subject", "Recap Type", "Tone", "Length", "Generate"];
@@ -277,7 +278,8 @@ export function RecapWizard({
                         </span>
                         <span className="font-medium">{p.name}</span>
                       </span>
-                      <span className="text-xs text-muted">
+                      <span className="flex items-center gap-1.5 text-xs text-muted">
+                        <Flag code={p.teamShortName} name={p.teamName} />
                         {p.teamName} · {p.position}
                       </span>
                     </button>

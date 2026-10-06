@@ -12,17 +12,22 @@ export const recapInclude = {
 } satisfies Prisma.RecapInclude;
 
 export const recapRepo = {
-  listByUser(userId: string, opts?: { skip?: number; take?: number }) {
+  listByUser(
+    userId: string,
+    opts?: { skip?: number; take?: number; status?: RecapStatus },
+  ) {
     return prisma.recap.findMany({
-      where: { userId },
+      where: { userId, ...(opts?.status ? { status: opts.status } : {}) },
       include: { tournament: true, team: true, player: true },
       orderBy: { createdAt: "desc" },
       skip: opts?.skip ?? 0,
       take: opts?.take ?? 50,
     });
   },
-  countByUser(userId: string) {
-    return prisma.recap.count({ where: { userId } });
+  countByUser(userId: string, status?: RecapStatus) {
+    return prisma.recap.count({
+      where: { userId, ...(status ? { status } : {}) },
+    });
   },
   findById(id: string) {
     return prisma.recap.findUnique({ where: { id }, include: recapInclude });
