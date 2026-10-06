@@ -17,6 +17,6 @@ export const GET = apiHandler(async () => {
   ]);
   const state = getLiveState(Date.now(), teams, players);
   return ok(state, {
-    headers: { "Cache-Control": "public, max-age=5, stale-while-revalidate=10" },
+    headers: { "Cache-Control": "public, max-age=3, stale-while-revalidate=5" },
   });
 });

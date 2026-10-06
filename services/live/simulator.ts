@@ -13,9 +13,14 @@ import type { TeamRef, PlayerTournamentStats } from "@/types";
  */
 
 // ── Schedule ──────────────────────────────────────────────────────────
-// Each slot: 8 min pre-match → 47 min 1H → 15 min HT → 50 min 2H → 10 min FT
-const SLOT_MS = 130 * 60_000;
-const PRE_MIN = 8;
+// Time-compressed ~2.4×: a full match plays in ~55 wall minutes, so events
+// land every ~30s and the feed always feels alive (CREX-style ball-by-ball).
+// Each slot: 4 min pre-match → 19 min 1H → 6 min HT → 21 min 2H → 5 min FT
+const SLOT_MS = 55 * 60_000;
+const PRE_MIN = 4;
+const H1_WALL = 19; // wall minutes for first half
+const HT_WALL = 6; // halftime
+const H2_WALL = 21; // wall minutes for second half
 
 export type LivePhase = "PRE" | "LIVE_1H" | "HT" | "LIVE_2H" | "FT";
 
@@ -166,8 +171,9 @@ function planEvents(
     }
   }
 
-  // Supporting drama: chances, cards, a sub or two, momentum swings
-  const extras = 5 + Math.floor(r() * 5);
+  // Supporting drama: chances, cards, subs, momentum swings — dense enough
+  // that something lands in the feed roughly every match minute or two.
+  const extras = 14 + Math.floor(r() * 8);
   for (let i = 0; i < extras; i++) {
     const teamIdx = r() < 0.5 ? 0 : 1;
     const minute = 3 + Math.floor(r() * 88);
@@ -225,27 +231,30 @@ export function getLiveState(
   const t = now - cycle * SLOT_MS;
 
   const msFrom = (startMin: number) => t - startMin * 60_000;
+  const H1_END = PRE_MIN + H1_WALL;
+  const HT_END = H1_END + HT_WALL;
+  const H2_END = HT_END + H2_WALL;
   const phase: LivePhase =
     t < PRE_MIN * 60_000
       ? "PRE"
-      : t < (PRE_MIN + 47) * 60_000
+      : t < H1_END * 60_000
         ? "LIVE_1H"
-        : t < (PRE_MIN + 62) * 60_000
+        : t < HT_END * 60_000
           ? "HT"
-          : t < (PRE_MIN + 112) * 60_000
+          : t < H2_END * 60_000
             ? "LIVE_2H"
             : "FT";
 
-  // Match minute: 1H runs 0→45+2 (wall 47), 2H runs 46→90+3 (wall 50)
+  // Match minute: 1H runs 0→45+2 (wall 19), 2H runs 46→90+3 (wall 21)
   const minute =
     phase === "PRE"
       ? 0
       : phase === "LIVE_1H"
-        ? Math.min(47, Math.floor(msFrom(PRE_MIN) / 60_000))
+        ? Math.min(47, Math.floor((msFrom(PRE_MIN) / 60_000 / H1_WALL) * 47))
         : phase === "HT"
           ? 47
           : phase === "LIVE_2H"
-            ? Math.min(93, 46 + Math.floor(msFrom(PRE_MIN + 62) / 60_000))
+            ? Math.min(93, 46 + Math.floor((msFrom(HT_END) / 60_000 / H2_WALL) * 47))
             : 93;
 
   const displayMinute =

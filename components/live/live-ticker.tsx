@@ -15,7 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { LiveState, LiveEvent } from "@/services/live/simulator";
 
-const POLL_MS = 10_000;
+const POLL_MS = 5_000;
 
 const EVENT_ICON: Record<LiveEvent["type"], React.ReactNode> = {
   GOAL: <Goal className="size-4 text-accent" />,
@@ -96,6 +96,7 @@ function StatBar({
 export function LiveTicker({ compact = false }: { compact?: boolean }) {
   const [state, setState] = useState<LiveState | null>(null);
   const [flashGoal, setFlashGoal] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState<number | null>(null);
   const lastTopEvent = useRef<string | null>(null);
 
   useEffect(() => {
@@ -117,6 +118,7 @@ export function LiveTicker({ compact = false }: { compact?: boolean }) {
         }
         if (top) lastTopEvent.current = `${top.minute}-${top.text}`;
         setState(data);
+        setUpdatedAt(Date.now());
       } catch {
         /* next poll retries */
       }
@@ -150,6 +152,11 @@ export function LiveTicker({ compact = false }: { compact?: boolean }) {
           <CardTitle className="flex items-center gap-2 text-sm">
             {!compact && "Live Match Centre"}
             {compact && "Live Scores"}
+            {updatedAt && (
+              <span className="text-[10px] font-normal text-muted">
+                · updated {Math.max(0, Math.round((Date.now() - updatedAt) / 1000))}s ago
+              </span>
+            )}
           </CardTitle>
           <PhaseBadge state={state} />
         </div>

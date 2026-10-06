@@ -14,7 +14,7 @@ export default function LivePage() {
         </h1>
         <p className="mt-1 text-sm text-muted">
           Ball-by-ball simulated World Cup action — updates automatically every
-          10 seconds. Every visitor watches the same match at the same minute.
+          few seconds. Every visitor watches the same match at the same minute.
         </p>
       </div>
 
