@@ -23,6 +23,7 @@ A production-style, full-stack portfolio project: pick a World Cup, a team, or a
 - **A real media pipeline.** Video is assembled from generated visuals (SVG storyboards → `sharp` PNG frames → FFmpeg `xfade` transitions → MP4) with TTS or synthesized audio — zero copyrighted footage.
 - **Real async jobs.** Generation runs as a `GenerationJob` claimed atomically by a worker; the UI shows *actual* stage/progress read from the database — no fake loaders.
 - **Real backend depth.** Service/repository layering, provider abstraction (swap demo data ↔ API-Football), ownership-checked auth, rate limits, caching, indexes, seeding, tests.
+- **Live score centre.** A CREX-style auto-updating match feed (`/live`): kickoff → halves → FT on a deterministic schedule — the same match minute for every viewer, computed statelessly from wall-clock time (no stateful broadcaster needed), polled every 10s with a 5s HTTP cache.
 
 ## Tech stack
 

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Flag } from "@/components/flag";
+import { LiveTicker } from "@/components/live/live-ticker";
 import { formatDate } from "@/lib/utils";
 import type { Metadata } from "next";
 
@@ -82,6 +83,9 @@ export default async function DashboardPage() {
           </Link>
         </Button>
       </div>
+
+      {/* Live match — auto-updates every 10s */}
+      <LiveTicker compact />
 
       {/* Stat cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

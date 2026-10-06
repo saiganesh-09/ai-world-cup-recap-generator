@@ -14,6 +14,7 @@ import {
   Menu,
   X,
   LogOut,
+  Radio,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/create", label: "Create Recap", icon: PlusCircle },
   { href: "/recaps", label: "My Recaps", icon: Library },
+  { href: "/live", label: "Live Scores", icon: Radio },
   { href: "/teams", label: "Teams", icon: Users },
   { href: "/players", label: "Players", icon: User },
   { href: "/tournaments", label: "Tournaments", icon: Trophy },

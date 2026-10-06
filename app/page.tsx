@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { LiveTicker } from "@/components/live/live-ticker";
 import { prisma } from "@/lib/db";
 
 // Dynamic — stats come from the DB, which isn't reachable at Docker build time.
@@ -186,6 +187,11 @@ export default async function LandingPage() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Live match strip — same simulated match for every visitor */}
+        <div className="mt-12 w-full max-w-2xl animate-fade-in-up" style={{ animationDelay: "300ms" }}>
+          <LiveTicker compact />
         </div>
       </section>
 
