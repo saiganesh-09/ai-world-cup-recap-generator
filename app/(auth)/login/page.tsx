@@ -1,8 +1,8 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { LogIn, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,8 +10,38 @@ import { Input, Label } from "@/components/ui/input";
 
 function LoginForm() {
   const router = useRouter();
+  const params = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const autoDemo = useRef(false);
+
+  async function demoLogin() {
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "demo@worldcup.app", password: "demo1234" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Demo login failed");
+      router.push("/dashboard");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Demo login failed");
+      setLoading(false);
+    }
+  }
+
+  // ?demo=1 → frictionless evaluator flow
+  useEffect(() => {
+    if (params.get("demo") === "1" && !autoDemo.current) {
+      autoDemo.current = true;
+      void demoLogin();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params]);
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -33,25 +63,6 @@ function LoginForm() {
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
-      setLoading(false);
-    }
-  }
-
-  async function demoLogin() {
-    setError(null);
-    setLoading(true);
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: "demo@worldcup.app", password: "demo1234" }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Demo login failed");
-      router.push("/dashboard");
-      router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Demo login failed");
       setLoading(false);
     }
   }
