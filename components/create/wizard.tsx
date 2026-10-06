@@ -120,7 +120,7 @@ export function RecapWizard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tournamentId,
-          teamId: mode === "team" ? teamId : selectedPlayer ? null : null,
+          teamId: mode === "team" ? teamId : null,
           playerId: mode === "player" ? playerId : null,
           type,
           tone,

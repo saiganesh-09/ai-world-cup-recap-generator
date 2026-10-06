@@ -1,5 +1,5 @@
-import { notFound } from "next/navigation";
-import { requireUser } from "@/lib/auth";
+import { notFound, redirect } from "next/navigation";
+import { getSessionUser } from "@/lib/auth";
 import { recapRepo } from "@/repositories/recap-repo";
 import { RecapView } from "@/components/recap/recap-view";
 import { StatusTracker } from "@/components/recap/status-tracker";
@@ -28,7 +28,8 @@ export default async function RecapDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const user = await requireUser();
+  const user = await getSessionUser();
+  if (!user) redirect("/login");
   const recap = await recapRepo.findById(id);
   if (!recap || recap.userId !== user.id) notFound();
 

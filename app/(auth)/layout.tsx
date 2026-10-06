@@ -1,7 +1,18 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Trophy } from "lucide-react";
+import { getSessionUser } from "@/lib/auth";
 
-export default function AuthLayout({ children }: { children: React.ReactNode }) {
+export const dynamic = "force-dynamic";
+
+export default async function AuthLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  // Already signed in? Auth pages are pointless — go to the app.
+  if (await getSessionUser()) redirect("/dashboard");
+
   return (
     <main className="flex min-h-full flex-1 flex-col items-center justify-center px-4 py-12">
       <Link

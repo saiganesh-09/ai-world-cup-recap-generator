@@ -163,23 +163,25 @@ export function RecapView({ recap }: { recap: RecapWithRelations }) {
             </Card>
           ) : null}
 
-          {/* Match timeline */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Match Timeline</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ol className="relative ml-2 flex flex-col gap-4 border-l border-border pl-6">
-                {(() => {
-                  const seen = new Set<string>();
-                  return recap.moments
-                    .map((m) => m.match)
-                    .filter((m): m is NonNullable<typeof m> => {
-                      if (!m || seen.has(m.id)) return false;
-                      seen.add(m.id);
-                      return true;
-                    })
-                    .map((m) => (
+          {/* Match timeline — only when moments reference real matches */}
+          {(() => {
+            const seen = new Set<string>();
+            const timelineMatches = recap.moments
+              .map((m) => m.match)
+              .filter((m): m is NonNullable<typeof m> => {
+                if (!m || seen.has(m.id)) return false;
+                seen.add(m.id);
+                return true;
+              });
+            if (timelineMatches.length === 0) return null;
+            return (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Match Timeline</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ol className="relative ml-2 flex flex-col gap-4 border-l border-border pl-6">
+                    {timelineMatches.map((m) => (
                       <li key={m.id} className="relative">
                         <span
                           className="absolute -left-[29px] top-1.5 size-2.5 rounded-full bg-accent"
@@ -200,11 +202,12 @@ export function RecapView({ recap }: { recap: RecapWithRelations }) {
                           </span>
                         </p>
                       </li>
-                    ));
-                })()}
-              </ol>
-            </CardContent>
-          </Card>
+                    ))}
+                  </ol>
+                </CardContent>
+              </Card>
+            );
+          })()}
         </div>
 
         <aside className="flex flex-col gap-6">
