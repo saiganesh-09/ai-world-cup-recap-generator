@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Wand2, MapPin } from "lucide-react";
+import { Flag } from "@/components/flag";
 import { STAGE_LABELS, POSITION_LABELS, formatDate } from "@/lib/utils";
 import type { Metadata } from "next";
 
@@ -48,9 +49,7 @@ export default async function TeamPage({
       >
         <CardContent className="flex flex-wrap items-center justify-between gap-4 p-6">
           <div className="flex items-center gap-4">
-            <span aria-hidden className="text-5xl">
-              {team.flag}
-            </span>
+            <Flag code={team.shortName} name={team.name} className="text-5xl" />
             <div>
               <h1 className="text-2xl font-bold">{team.name}</h1>
               <p className="text-sm text-muted">

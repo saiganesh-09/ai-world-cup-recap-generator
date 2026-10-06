@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Flag } from "@/components/flag";
 import { formatDate } from "@/lib/utils";
 import type { Metadata } from "next";
 
@@ -44,7 +45,18 @@ export default async function DashboardPage() {
 
   const statCards = [
     { label: "Recaps Created", value: total, icon: Film },
-    { label: "Favorite Team", value: favoriteTeam?.name ?? "—", icon: Trophy, sub: favoriteTeam?.flag },
+    {
+      label: "Favorite Team",
+      value: favoriteTeam?.name ?? "—",
+      icon: Trophy,
+      flag: favoriteTeam ? (
+        <Flag
+          code={favoriteTeam.shortName}
+          name={favoriteTeam.name}
+          className="text-xl"
+        />
+      ) : null,
+    },
     { label: "Favorite Player", value: favoritePlayer?.name ?? "—", icon: Star },
     {
       label: "Latest Recap",
@@ -80,8 +92,8 @@ export default async function DashboardPage() {
                 <p className="text-xs font-medium uppercase tracking-widest text-muted">
                   {s.label}
                 </p>
-                <p className="mt-2 text-xl font-bold">
-                  {s.sub ? `${s.sub} ` : ""}
+                <p className="mt-2 flex items-center gap-2 text-xl font-bold">
+                  {"flag" in s ? s.flag : null}
                   {s.value}
                 </p>
               </div>

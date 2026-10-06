@@ -4,6 +4,7 @@ import { getSportsProvider } from "@/services/sports/provider";
 import { prisma } from "@/lib/db";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Flag } from "@/components/flag";
 import { PlayerChart } from "@/components/players/player-chart";
 import { STAGE_LABELS, POSITION_LABELS, formatDate } from "@/lib/utils";
 import type { Metadata } from "next";
@@ -65,7 +66,12 @@ export default async function PlayerPage({
                 href={`/teams/${player.team.id}`}
                 className="text-accent underline-offset-4 hover:underline"
               >
-                {player.team.flag} {player.team.name}
+                <Flag
+                  code={player.team.shortName}
+                  name={player.team.name}
+                  className="mr-1"
+                />
+                {player.team.name}
               </Link>
             </p>
           </div>

@@ -4,6 +4,7 @@ import { getSportsProvider } from "@/services/sports/provider";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SearchInput } from "@/components/search-input";
+import { Flag } from "@/components/flag";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Users } from "lucide-react";
 import type { Metadata } from "next";
@@ -54,9 +55,7 @@ async function TeamGrid({ q }: { q?: string }) {
           <Card className="h-full">
             <CardContent className="p-5">
               <div className="flex items-start justify-between">
-                <span aria-hidden className="text-3xl">
-                  {team.flag}
-                </span>
+                <Flag code={team.shortName} name={team.name} className="text-4xl" />
                 <Badge variant="secondary">#{team.fifaRanking}</Badge>
               </div>
               <h3 className="mt-3 text-lg font-bold">{team.name}</h3>

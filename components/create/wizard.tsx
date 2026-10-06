@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Flag } from "@/components/flag";
 import { cn } from "@/lib/utils";
 import {
   RECAP_TYPE_LABELS,
@@ -247,7 +248,7 @@ export function RecapWizard({
                       )}
                     >
                       <span className="flex items-center gap-2.5">
-                        <span aria-hidden className="text-xl">{t.flag}</span>
+                        <Flag code={t.shortName} name={t.name} className="text-xl" />
                         <span className="font-medium">{t.name}</span>
                       </span>
                       <span className="text-xs text-muted">#{t.fifaRanking}</span>
@@ -384,7 +385,7 @@ export function RecapWizard({
                   <dt className="text-muted">Subject</dt>
                   <dd className="font-medium">
                     {mode === "team"
-                      ? `${selectedTeam?.flag ?? ""} ${selectedTeam?.name}`
+                      ? selectedTeam?.name
                       : mode === "player"
                         ? selectedPlayer?.name
                         : "Whole tournament"}

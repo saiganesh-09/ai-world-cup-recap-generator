@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { SearchInput } from "@/components/search-input";
 import { EmptyState } from "@/components/ui/empty-state";
 import { User, Star } from "lucide-react";
+import { Flag } from "@/components/flag";
 import { POSITION_LABELS } from "@/lib/utils";
 import type { Metadata } from "next";
 
@@ -62,7 +63,10 @@ async function PlayerGrid({
                 </div>
                 <h3 className="mt-3 font-bold leading-tight">{p.player.name}</h3>
                 <p className="mt-0.5 text-xs text-muted">
-                  {team?.flag} {team?.name} · {POSITION_LABELS[p.player.position]}
+                  {team && (
+                    <Flag code={team.shortName} name={team.name} className="mr-1" />
+                  )}
+                  {team?.name} · {POSITION_LABELS[p.player.position]}
                 </p>
                 <div className="mt-4 grid grid-cols-3 gap-2 border-t border-border pt-3 text-center text-xs">
                   <div>
