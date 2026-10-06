@@ -90,28 +90,45 @@ export default async function LandingPage() {
   ]);
 
   return (
-    <main>
-      {/* ── Nav ── */}
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5">
-        <Link href="/" className="flex items-center gap-2 whitespace-nowrap font-bold tracking-tight">
-          <Trophy className="size-5 text-accent" aria-hidden />
-          <span>WC Recap<span className="text-accent">.ai</span></span>
-        </Link>
-        <nav className="flex items-center gap-2" aria-label="Primary">
-          <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex">
-            <Link href="/engineering">Engineering</Link>
-          </Button>
-          <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
-            <Link href="/login">Sign in</Link>
-          </Button>
-          <Button size="sm" asChild>
-            <Link href="/create">Create My Recap</Link>
-          </Button>
-        </nav>
+    <main className="flex min-h-[100dvh] flex-col">
+      {/* ── Nav — centered glass pill, aligned with the hero column ── */}
+      <header className="sticky top-0 z-40 w-full px-4 pt-4">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 rounded-full border border-border bg-surface/80 py-2 pl-5 pr-2 shadow-lg shadow-black/30 backdrop-blur-md">
+          <Link
+            href="/"
+            className="flex items-center gap-2 whitespace-nowrap font-bold tracking-tight"
+          >
+            <Trophy className="size-5 text-accent" aria-hidden />
+            <span>
+              WC Recap<span className="text-accent">.ai</span>
+            </span>
+          </Link>
+          <nav className="flex items-center gap-1" aria-label="Primary">
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className="hidden rounded-full md:inline-flex"
+            >
+              <Link href="/engineering">Engineering</Link>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className="hidden rounded-full sm:inline-flex"
+            >
+              <Link href="/login">Sign in</Link>
+            </Button>
+            <Button size="sm" asChild className="rounded-full">
+              <Link href="/create">Create My Recap</Link>
+            </Button>
+          </nav>
+        </div>
       </header>
 
-      {/* ── Hero ── */}
-      <section className="mx-auto flex w-full max-w-6xl flex-col items-center px-6 pb-20 pt-16 text-center md:pt-24">
+      {/* ── Hero — fills the first viewport, vertically centered ── */}
+      <section className="mx-auto flex w-full max-w-6xl flex-1 flex-col items-center justify-center px-6 py-16 text-center md:py-20">
         <Badge variant="secondary" className="mb-6 animate-fade-in-up">
           <Sparkles className="size-3" aria-hidden /> AI-powered · Video · Statistics
         </Badge>
