@@ -1,0 +1,369 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Auth ────────────────────────────────────────────────────────────
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  passwordHash String
+  avatar       String?
+  role         UserRole  @default(USER)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  sessions        Session[]
+  recaps          Recap[]
+  analyticsEvents AnalyticsEvent[]
+
+  @@index([email])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// ─── Tournament domain ───────────────────────────────────────────────
+
+enum TournamentStatus {
+  UPCOMING
+  LIVE
+  COMPLETED
+}
+
+model Tournament {
+  id          String           @id @default(cuid())
+  name        String
+  year        Int
+  hostCountry String
+  logo        String?
+  startDate   DateTime
+  endDate     DateTime
+  status      TournamentStatus @default(COMPLETED)
+  isDemo      Boolean          @default(false)
+
+  matches Match[]
+  recaps  Recap[]
+
+  @@unique([name, year])
+  @@index([year])
+}
+
+model Team {
+  id            String  @id @default(cuid())
+  name          String
+  shortName     String // 3-letter code, e.g. IND
+  country       String
+  flag          String // emoji flag, safe to ship
+  primaryColor  String @default("#1f2937")
+  accentColor   String @default("#f59e0b")
+  logo          String?
+  fifaRanking   Int?
+
+  players         Player[]
+  homeMatches     Match[]          @relation("homeTeam")
+  awayMatches     Match[]          @relation("awayTeam")
+  teamMatchStats  TeamMatchStat[]
+  recaps          Recap[]
+  matchEvents     MatchEvent[]
+
+  @@unique([name])
+  @@index([shortName])
+  @@index([country])
+}
+
+enum Position {
+  GK
+  DF
+  MF
+  FW
+}
+
+model Player {
+  id           String   @id @default(cuid())
+  name         String
+  teamId       String
+  team         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  position     Position
+  jerseyNumber Int
+  photo        String?
+  age          Int?
+  isStar       Boolean  @default(false) // feature-able "key player"
+
+  matchStats    PlayerMatchStat[]
+  matchEvents   MatchEvent[]          @relation("eventPlayer")
+  assists       MatchEvent[]          @relation("eventAssist")
+  recaps        Recap[]
+  recapMoments  RecapMoment[]
+
+  @@index([teamId])
+  @@index([name])
+  @@index([position])
+}
+
+enum MatchStage {
+  GROUP
+  ROUND_OF_16
+  QUARTER_FINAL
+  SEMI_FINAL
+  THIRD_PLACE
+  FINAL
+}
+
+enum MatchStatus {
+  SCHEDULED
+  LIVE
+  FINISHED
+}
+
+model Match {
+  id             String      @id @default(cuid())
+  tournamentId   String
+  tournament     Tournament  @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  homeTeamId     String
+  homeTeam       Team        @relation("homeTeam", fields: [homeTeamId], references: [id])
+  awayTeamId     String
+  awayTeam       Team        @relation("awayTeam", fields: [awayTeamId], references: [id])
+  date           DateTime
+  venue          String
+  stage          MatchStage
+  status         MatchStatus @default(FINISHED)
+  homeScore      Int         @default(0)
+  awayScore      Int         @default(0)
+  homePenalties  Int?
+  awayPenalties  Int?
+
+  events      MatchEvent[]
+  playerStats PlayerMatchStat[]
+  teamStats   TeamMatchStat[]
+  recapMoments RecapMoment[]
+  transcripts Transcript[]
+
+  @@index([tournamentId, date])
+  @@index([homeTeamId])
+  @@index([awayTeamId])
+  @@index([stage])
+}
+
+enum EventType {
+  GOAL
+  PENALTY_GOAL
+  PENALTY_MISS
+  OWN_GOAL
+  YELLOW_CARD
+  RED_CARD
+  SUBSTITUTION
+}
+
+model MatchEvent {
+  id             String    @id @default(cuid())
+  matchId        String
+  match          Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  minute         Int
+  type           EventType
+  teamId         String?
+  team           Team?     @relation(fields: [teamId], references: [id])
+  playerId       String?
+  player         Player?   @relation("eventPlayer", fields: [playerId], references: [id])
+  assistPlayerId String?
+  assistPlayer   Player?   @relation("eventAssist", fields: [assistPlayerId], references: [id])
+  description    String
+
+  @@index([matchId, minute])
+  @@index([playerId])
+  @@index([type])
+}
+
+model PlayerMatchStat {
+  playerId       String
+  player         Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  matchId        String
+  match          Match   @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  minutes        Int     @default(90)
+  goals          Int     @default(0)
+  assists        Int     @default(0)
+  shots          Int     @default(0)
+  shotsOnTarget  Int     @default(0)
+  passes         Int     @default(0)
+  tackles        Int     @default(0)
+  rating         Float   @default(6.5)
+
+  @@id([playerId, matchId])
+  @@index([matchId])
+}
+
+model TeamMatchStat {
+  teamId        String
+  team          Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  matchId       String
+  match         Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  possession    Int    @default(50) // percent
+  shots         Int    @default(0)
+  shotsOnTarget Int    @default(0)
+  corners       Int    @default(0)
+  fouls         Int    @default(0)
+
+  @@id([teamId, matchId])
+  @@index([matchId])
+}
+
+// ─── Recaps ──────────────────────────────────────────────────────────
+
+enum RecapType {
+  TEAM_JOURNEY
+  PLAYER_JOURNEY
+  TOURNAMENT_HIGHLIGHTS
+  BEST_MATCHES
+  EMOTIONAL_STORY
+  STATISTICAL_BREAKDOWN
+}
+
+enum RecapTone {
+  EXCITING
+  EMOTIONAL
+  PROFESSIONAL
+  STATISTICAL
+  COMMENTARY
+}
+
+enum RecapDuration {
+  SHORT // ~60s
+  STANDARD // ~2min
+  EXTENDED // 4–5min
+}
+
+enum RecapStatus {
+  DRAFT
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model Recap {
+  id           String        @id @default(cuid())
+  userId       String
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tournamentId String
+  tournament   Tournament    @relation(fields: [tournamentId], references: [id])
+  teamId       String?
+  team         Team?         @relation(fields: [teamId], references: [id])
+  playerId     String?
+  player       Player?       @relation(fields: [playerId], references: [id])
+  type         RecapType
+  tone         RecapTone
+  duration     RecapDuration
+  title        String
+  summary      String?
+  story        Json?         // validated AiRecapOutput
+  status       RecapStatus   @default(DRAFT)
+  videoUrl     String?
+  thumbnailUrl String?
+  durationSec  Int?
+  error        String?       // user-safe message
+  shareId      String        @unique @default(cuid())
+  isPublic     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  moments RecapMoment[]
+  jobs    GenerationJob[]
+
+  @@index([userId, createdAt])
+  @@index([status])
+  @@index([tournamentId])
+}
+
+model RecapMoment {
+  id              String   @id @default(cuid())
+  recapId         String
+  recap           Recap    @relation(fields: [recapId], references: [id], onDelete: Cascade)
+  matchId         String?
+  match           Match?   @relation(fields: [matchId], references: [id])
+  playerId        String?
+  player          Player?  @relation(fields: [playerId], references: [id])
+  minute          Int?
+  title           String
+  description     String
+  importanceScore Int      // 0–100
+  order           Int
+
+  @@index([recapId, order])
+}
+
+// ─── Jobs & media ────────────────────────────────────────────────────
+
+enum JobType {
+  RECAP
+  VIDEO
+  TRANSCRIPTION
+}
+
+enum JobStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model GenerationJob {
+  id          String    @id @default(cuid())
+  recapId     String?
+  recap       Recap?    @relation(fields: [recapId], references: [id], onDelete: Cascade)
+  type        JobType   @default(RECAP)
+  status      JobStatus @default(QUEUED)
+  stage       String?   // pipeline stage key
+  progress    Int       @default(0) // 0–100
+  error       String?
+  payload     Json?
+  attempts    Int       @default(0)
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([status, createdAt])
+  @@index([recapId])
+}
+
+model Transcript {
+  id        String   @id @default(cuid())
+  matchId   String?
+  match     Match?   @relation(fields: [matchId], references: [id])
+  source    String // filename or origin label
+  language  String   @default("en")
+  segments  Json // [{ start, end, text }]
+  createdAt DateTime @default(now())
+
+  @@index([matchId])
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  name      String
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  props     Json?
+  createdAt DateTime @default(now())
+
+  @@index([name, createdAt])
+}
