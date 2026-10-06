@@ -10,7 +10,8 @@ export const GET = apiHandler(
     const recap = await recapRepo.findByShareId(shareId);
     if (!recap || !recap.isPublic) throw new NotFoundError("Recap");
     track("recap_shared", { recapId: recap.id });
-    const { userId: _userId, ...publicRecap } = recap;
+    const publicRecap = { ...recap };
+    delete (publicRecap as { userId?: string }).userId;
     return ok({ recap: publicRecap });
   },
 );

@@ -3,7 +3,6 @@ import { Suspense } from "react";
 import { getSportsProvider } from "@/services/sports/provider";
 import { prisma } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { SearchInput } from "@/components/search-input";
 import { EmptyState } from "@/components/ui/empty-state";
 import { User, Star } from "lucide-react";

@@ -96,6 +96,15 @@ body {
   animation: pulse-dot 1.6s ease-in-out infinite;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in-up,
+  .animate-pulse-dot,
+  .card-hover {
+    animation: none;
+    transition: none;
+  }
+}
+
 /* Subtle card hover lift */
 .card-hover {
   transition:

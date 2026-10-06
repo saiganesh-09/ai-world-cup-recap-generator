@@ -93,15 +93,15 @@ export default async function LandingPage() {
     <main>
       {/* ── Nav ── */}
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-5">
-        <Link href="/" className="flex items-center gap-2 font-bold tracking-tight">
+        <Link href="/" className="flex items-center gap-2 whitespace-nowrap font-bold tracking-tight">
           <Trophy className="size-5 text-accent" aria-hidden />
           <span>WC Recap<span className="text-accent">.ai</span></span>
         </Link>
         <nav className="flex items-center gap-2" aria-label="Primary">
-          <Button variant="ghost" size="sm" asChild>
+          <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex">
             <Link href="/engineering">Engineering</Link>
           </Button>
-          <Button variant="ghost" size="sm" asChild>
+          <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
             <Link href="/login">Sign in</Link>
           </Button>
           <Button size="sm" asChild>
