@@ -157,14 +157,32 @@ Failures mark job `FAILED` with a user-safe error; the UI offers one-click retry
 
 ## Deployment
 
-| Piece | Recommended |
-|---|---|
-| App | Vercel / any Node host (`next build` verified) |
-| DB | Neon / Supabase Postgres — set `DATABASE_URL` |
-| Jobs | Long-running: run `npm run worker` on a container host (Railway/Fly/ECS); swap `pollOnce` → BullMQ/SQS for scale |
-| Media | `public/generated` locally; S3 + CDN in prod (swap the write step in `services/video/video-service.ts`) |
+The pipeline (FFmpeg, in-process worker, media writes) needs a **persistent Node
+container** — serverless functions (Vercel/Netlify) cannot run it.
 
-Note: FFmpeg video jobs need a Node runtime — run generation on the worker, not in a serverless function.
+| Piece | Where |
+|---|---|
+| App + worker | `Dockerfile` — any container host (Railway, Render, Fly, ECS, Koyeb). The image builds via GitHub Actions → **GHCR** on every push to `main`. |
+| DB | Any managed Postgres — this project is wired to **Neon** (free tier) |
+| Media | Generated video/thumbnail bytes are stored **in Postgres** and streamed via `/api/media/<id>/<kind>` — survives ephemeral filesystems and sleep/wake cycles with zero object-storage setup |
+| Blueprints | `render.yaml` (Render) included; `docker-entrypoint.sh` pushes schema + seeds-if-empty on first boot |
+
+### Instant public demo (what's running now)
+
+`npm run build && npm start`, then expose it with a Cloudflare quick tunnel —
+no account, no payment:
+
+```bash
+cloudflared tunnel --url http://localhost:3000   # prints a public https URL
+```
+
+The tunnel URL is ephemeral (changes each run). For a permanent URL use a free
+named Cloudflare tunnel, or deploy the Docker image to a persistent host.
+
+### Scaling path (when you need it)
+
+Run `npm run worker` as a second service (same image, different command) and move
+media to S3/CDN if Postgres-hosted blobs ever outgrow the free tier.
 
 ## Media rights & demo data
 
