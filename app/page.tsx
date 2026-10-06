@@ -18,7 +18,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { prisma } from "@/lib/db";
 
-export const revalidate = 3600;
+// Dynamic — stats come from the DB, which isn't reachable at Docker build time.
+export const dynamic = "force-dynamic";
 
 const FEATURES = [
   {

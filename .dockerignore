@@ -1,0 +1,13 @@
+node_modules
+.next
+.dev-db
+tmp-media
+public/generated
+test-results
+playwright-report
+docs/screenshots
+.git
+.gitignore
+*.log
+.env
+.env.local
