@@ -5,6 +5,8 @@
 
 A production-style, full-stack portfolio project: pick a World Cup, a team, or a player → an async pipeline analyzes real match data, scores the moments that mattered, writes a structured AI narrative, and renders a broadcast-style highlight video via FFmpeg — then serves it on a shareable recap page.
 
+**[Live demo →](https://trying-color-thinks-exchanges.trycloudflare.com)** — click **Explore Demo** for the one-click evaluator flow.
+
 | Landing | Dashboard |
 |---|---|
 | ![Landing](docs/screenshots/landing.png) | ![Dashboard](docs/screenshots/dashboard.png) |
