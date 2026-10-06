@@ -279,6 +279,8 @@ model Recap {
   status       RecapStatus   @default(DRAFT)
   videoUrl     String?
   thumbnailUrl String?
+  videoBytes   Bytes?
+  thumbBytes   Bytes?
   durationSec  Int?
   error        String?       // user-safe message
   shareId      String        @unique @default(cuid())

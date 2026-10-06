@@ -123,6 +123,8 @@ export async function processGenerationJob(jobId: string): Promise<void> {
         story: story as object,
         videoUrl: rendered.videoUrl,
         thumbnailUrl: rendered.thumbnailUrl,
+        videoBytes: new Uint8Array(rendered.videoBytes),
+        thumbBytes: new Uint8Array(rendered.thumbBytes),
         durationSec: rendered.durationSec,
         status: "COMPLETED",
         error: null,

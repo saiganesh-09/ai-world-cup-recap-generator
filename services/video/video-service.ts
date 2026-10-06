@@ -1,4 +1,4 @@
-import { mkdir, writeFile, rm, cp } from "node:fs/promises";
+import { mkdir, writeFile, readFile, rm, cp } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import type {
@@ -15,6 +15,8 @@ import { buildNarrationScript, synthesizeNarration } from "./audio";
 export interface RenderedVideo {
   videoUrl: string;
   thumbnailUrl: string;
+  videoBytes: Buffer;
+  thumbBytes: Buffer;
   durationSec: number;
   slides: number;
   narrationIncluded: boolean;
@@ -91,8 +93,12 @@ export async function renderRecapVideo(
       0.6 * (frames.length - 1);
 
     return {
-      videoUrl: `/generated/${recapId}/video.mp4`,
-      thumbnailUrl: `/generated/${recapId}/thumbnail.png`,
+      // Served from DB blobs via /api/media — survives ephemeral filesystems
+      // on container hosts (files in public/generated are a dev-side cache).
+      videoUrl: `/api/media/${recapId}/video`,
+      thumbnailUrl: `/api/media/${recapId}/thumbnail`,
+      videoBytes: await readFile(videoPath),
+      thumbBytes: await readFile(thumbPath),
       durationSec: Math.max(1, Math.round(durationSec)),
       slides: slides.length,
       narrationIncluded: narrationFile != null,

@@ -1,0 +1,16 @@
+# Render blueprint — deploys the full-stack container (app + in-process
+# worker + FFmpeg). Postgres lives in Neon; media is stored in the DB so
+# the service survives the free tier's ephemeral filesystem + sleep cycles.
+services:
+  - type: web
+    name: wc-recap
+    runtime: docker
+    plan: free
+    region: oregon
+    branch: main
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false # paste your Neon connection string in the dashboard
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false # set after Render assigns your onrender.com URL
