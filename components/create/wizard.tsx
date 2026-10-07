@@ -11,6 +11,12 @@ import {
   Wand2,
   Check,
   Loader2,
+  Route,
+  Star,
+  Swords,
+  HeartPulse,
+  BarChart3,
+  type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -21,6 +27,9 @@ import {
   RECAP_TYPE_LABELS,
   TONE_LABELS,
   DURATION_LABELS,
+  RECAP_TYPE_DESCRIPTIONS,
+  TONE_DESCRIPTIONS,
+  DURATION_DESCRIPTIONS,
 } from "@/lib/utils";
 
 export interface WizardTournament {
@@ -47,14 +56,22 @@ export interface WizardPlayer {
 
 const STEPS = ["Tournament", "Subject", "Recap Type", "Tone", "Length", "Generate"];
 
-const TYPE_ICONS: Record<string, string> = {
-  TEAM_JOURNEY: "🛤️",
-  PLAYER_JOURNEY: "⭐",
-  TOURNAMENT_HIGHLIGHTS: "🏆",
-  BEST_MATCHES: "⚔️",
-  EMOTIONAL_STORY: "❤️",
-  STATISTICAL_BREAKDOWN: "📊",
+const TYPE_ICONS: Record<string, LucideIcon> = {
+  TEAM_JOURNEY: Route,
+  PLAYER_JOURNEY: Star,
+  TOURNAMENT_HIGHLIGHTS: Trophy,
+  BEST_MATCHES: Swords,
+  EMOTIONAL_STORY: HeartPulse,
+  STATISTICAL_BREAKDOWN: BarChart3,
 };
+
+const STEP_HINTS = [
+  "Pick which World Cup edition you want to relive.",
+  "Choose a team, a player, or the whole tournament.",
+  "Decide the shape of the story — we'll build the moments around it.",
+  "This sets how the narrator sounds in your video.",
+  "Longer recaps include more moments and detail.",
+];
 
 const NEEDS_TEAM = ["TEAM_JOURNEY", "EMOTIONAL_STORY", "STATISTICAL_BREAKDOWN", "BEST_MATCHES"];
 const NEEDS_PLAYER = ["PLAYER_JOURNEY"];
@@ -173,6 +190,9 @@ export function RecapWizard({
 
       <Card>
         <CardContent className="p-6 md:p-8">
+          {step < 5 && (
+            <p className="mb-4 text-sm text-muted">{STEP_HINTS[step]}</p>
+          )}
           {/* STEP 0 — tournament */}
           {step === 0 && (
             <fieldset>
@@ -303,6 +323,7 @@ export function RecapWizard({
               <div className="grid gap-3 sm:grid-cols-2">
                 {Object.entries(RECAP_TYPE_LABELS).map(([key, label]) => {
                   const enabled = validTypes.includes(key);
+                  const Icon = TYPE_ICONS[key];
                   return (
                     <button
                       key={key}
@@ -310,14 +331,19 @@ export function RecapWizard({
                       disabled={!enabled}
                       onClick={() => setType(key)}
                       className={cn(
-                        "flex items-center gap-3 rounded-xl border p-4 text-left transition-all disabled:opacity-35",
+                        "flex items-start gap-3 rounded-xl border p-4 text-left transition-all disabled:opacity-35",
                         type === key && enabled
                           ? "border-accent bg-accent/10"
                           : "border-border bg-surface-2/40 hover:border-accent/40",
                       )}
                     >
-                      <span aria-hidden className="text-2xl">{TYPE_ICONS[key]}</span>
-                      <span className="font-medium">{label}</span>
+                      <Icon className="mt-0.5 size-5 shrink-0 text-accent" aria-hidden />
+                      <span>
+                        <span className="block font-medium">{label}</span>
+                        <span className="mt-0.5 block text-xs leading-relaxed text-muted">
+                          {RECAP_TYPE_DESCRIPTIONS[key]}
+                        </span>
+                      </span>
                     </button>
                   );
                 })}
@@ -336,13 +362,23 @@ export function RecapWizard({
                     type="button"
                     onClick={() => setTone(key)}
                     className={cn(
-                      "rounded-xl border p-4 text-left font-medium transition-all",
+                      "rounded-xl border p-4 text-left transition-all",
                       tone === key
-                        ? "border-accent bg-accent/10 text-accent"
+                        ? "border-accent bg-accent/10"
                         : "border-border bg-surface-2/40 hover:border-accent/40",
                     )}
                   >
-                    {label}
+                    <span
+                      className={cn(
+                        "block font-medium",
+                        tone === key && "text-accent",
+                      )}
+                    >
+                      {label}
+                    </span>
+                    <span className="mt-0.5 block text-xs leading-relaxed text-muted">
+                      {TONE_DESCRIPTIONS[key]}
+                    </span>
                   </button>
                 ))}
               </div>
@@ -366,8 +402,13 @@ export function RecapWizard({
                         : "border-border bg-surface-2/40 hover:border-accent/40",
                     )}
                   >
-                    <span className="font-medium">{label}</span>
-                    {duration === key && <Check className="size-4 text-accent" aria-hidden />}
+                    <span>
+                      <span className="block font-medium">{label}</span>
+                      <span className="mt-0.5 block text-xs text-muted">
+                        {DURATION_DESCRIPTIONS[key]}
+                      </span>
+                    </span>
+                    {duration === key && <Check className="size-4 shrink-0 text-accent" aria-hidden />}
                   </button>
                 ))}
               </div>

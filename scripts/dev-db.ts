@@ -8,6 +8,7 @@
  */
 import EmbeddedPostgres from "embedded-postgres";
 import { execSync } from "node:child_process";
+import { existsSync, rmSync } from "node:fs";
 import path from "node:path";
 
 const PORT = 5433;
@@ -29,7 +30,14 @@ async function main() {
   });
 
   console.log(`Starting embedded PostgreSQL on 127.0.0.1:${PORT} ...`);
-  await pg.initialise();
+  const initialized = existsSync(path.join(DATA_DIR, "PG_VERSION"));
+  if (initialized) {
+    // Clear a stale pid file from an unclean shutdown so pg_ctl can start.
+    const pidFile = path.join(DATA_DIR, "postmaster.pid");
+    if (existsSync(pidFile)) rmSync(pidFile);
+  } else {
+    await pg.initialise();
+  }
   await pg.start();
 
   try {

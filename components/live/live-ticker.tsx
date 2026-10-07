@@ -96,8 +96,9 @@ function StatBar({
 export function LiveTicker({ compact = false }: { compact?: boolean }) {
   const [state, setState] = useState<LiveState | null>(null);
   const [flashGoal, setFlashGoal] = useState(false);
-  const [updatedAt, setUpdatedAt] = useState<number | null>(null);
+  const [secsAgo, setSecsAgo] = useState<number | null>(null);
   const lastTopEvent = useRef<string | null>(null);
+  const lastUpdate = useRef<number>(0);
 
   useEffect(() => {
     let stop = false;
@@ -118,16 +119,23 @@ export function LiveTicker({ compact = false }: { compact?: boolean }) {
         }
         if (top) lastTopEvent.current = `${top.minute}-${top.text}`;
         setState(data);
-        setUpdatedAt(Date.now());
+        lastUpdate.current = Date.now();
+        setSecsAgo(0);
       } catch {
         /* next poll retries */
       }
     }
     void tick();
     const id = setInterval(tick, POLL_MS);
+    const ago = setInterval(() => {
+      if (lastUpdate.current) {
+        setSecsAgo(Math.round((Date.now() - lastUpdate.current) / 1000));
+      }
+    }, 1000);
     return () => {
       stop = true;
       clearInterval(id);
+      clearInterval(ago);
     };
   }, []);
 
@@ -152,13 +160,21 @@ export function LiveTicker({ compact = false }: { compact?: boolean }) {
           <CardTitle className="flex items-center gap-2 text-sm">
             {!compact && "Live Match Centre"}
             {compact && "Live Scores"}
-            {updatedAt && (
+            {secsAgo !== null && (
               <span className="text-[10px] font-normal text-muted">
-                · updated {Math.max(0, Math.round((Date.now() - updatedAt) / 1000))}s ago
+                · updated {secsAgo === 0 ? "just now" : `${secsAgo}s ago`}
               </span>
             )}
           </CardTitle>
-          <PhaseBadge state={state} />
+          <span className="flex items-center gap-2">
+            <span
+              className="rounded-full border border-border px-2 py-0.5 text-[10px] font-medium text-muted"
+              title="Simulated match data — no real fixtures are connected"
+            >
+              Demo
+            </span>
+            <PhaseBadge state={state} />
+          </span>
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">

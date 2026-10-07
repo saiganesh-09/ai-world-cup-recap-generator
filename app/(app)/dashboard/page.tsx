@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { PlusCircle, Film, Trophy, Star, ArrowRight, Clock } from "lucide-react";
+import { PlusCircle, Film, Trophy, Star, ArrowRight, Clock, MousePointerClick, Wand2, Play } from "lucide-react";
 import { getSessionUser } from "@/lib/auth";
 import { recapRepo } from "@/repositories/recap-repo";
 import { getSportsProvider } from "@/services/sports/provider";
@@ -83,6 +83,32 @@ export default async function DashboardPage() {
           </Link>
         </Button>
       </div>
+
+      {/* First-run onboarding — shown until the user creates a recap */}
+      {total === 0 && (
+        <Card className="border-accent/30 bg-accent/5">
+          <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:gap-8">
+              {[
+                { icon: MousePointerClick, text: "Pick a team or player" },
+                { icon: Wand2, text: "Choose a style and hit generate" },
+                { icon: Play, text: "Watch & share your story" },
+              ].map((s, i) => (
+                <div key={s.text} className="flex items-center gap-2.5">
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-accent/15 text-xs font-bold text-accent">
+                    {i + 1}
+                  </span>
+                  <s.icon className="size-4 shrink-0 text-muted" aria-hidden />
+                  <span className="text-sm font-medium">{s.text}</span>
+                </div>
+              ))}
+            </div>
+            <Button asChild size="sm" className="shrink-0">
+              <Link href="/create">Start now <ArrowRight aria-hidden /></Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Live match — auto-updates every 10s */}
       <LiveTicker compact />

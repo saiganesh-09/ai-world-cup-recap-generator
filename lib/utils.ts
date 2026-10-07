@@ -56,6 +56,29 @@ export const DURATION_LABELS: Record<string, string> = {
   EXTENDED: "Extended (~4-5min)",
 };
 
+export const RECAP_TYPE_DESCRIPTIONS: Record<string, string> = {
+  TEAM_JOURNEY: "Follow one team's run — from first whistle to final heartbreak or glory.",
+  PLAYER_JOURNEY: "One star's story: every goal, assist, and defining moment.",
+  TOURNAMENT_HIGHLIGHTS: "The whole tournament's biggest moments in one package.",
+  BEST_MATCHES: "The classics — the most dramatic matches of the tournament.",
+  EMOTIONAL_STORY: "The human side — tears, triumphs, and the moments that mattered.",
+  STATISTICAL_BREAKDOWN: "The numbers — xG-style stats, records, and standout performers.",
+};
+
+export const TONE_DESCRIPTIONS: Record<string, string> = {
+  EXCITING: "Fast-paced and energetic — like a hype reel.",
+  EMOTIONAL: "Heartfelt and cinematic — the feels-first version.",
+  PROFESSIONAL: "Clean, measured broadcast journalism.",
+  STATISTICAL: "Data-led analysis for the numbers crowd.",
+  COMMENTARY: "Reads like a live match commentary call.",
+};
+
+export const DURATION_DESCRIPTIONS: Record<string, string> = {
+  SHORT: "A punchy highlights clip — perfect for sharing.",
+  STANDARD: "The sweet spot — enough depth to tell the full story.",
+  EXTENDED: "A deep-dive documentary cut with every key moment.",
+};
+
 export function stageOrder(stage: string): number {
   const order = [
     "GROUP",
