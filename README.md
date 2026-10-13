@@ -5,7 +5,7 @@
 
 A production-style, full-stack portfolio project: pick a World Cup, a team, or a player → an async pipeline analyzes real match data, scores the moments that mattered, writes a structured AI narrative, and renders a broadcast-style highlight video via FFmpeg — then serves it on a shareable recap page.
 
-**[Live demo →](https://coins-big-hang-nitrogen.trycloudflare.com)** — click **Explore Demo** for the one-click evaluator flow.
+**[Live demo →](https://students-ping-solving-online.trycloudflare.com)** — click **Explore Demo** for the one-click evaluator flow.
 
 | Landing | Dashboard |
 |---|---|
