@@ -10,6 +10,7 @@
     "format": "prettier --write .",
     "typecheck": "tsc --noEmit",
     "db:start": "tsx scripts/dev-db.ts",
+    "public": "tsx scripts/serve-public.ts",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",

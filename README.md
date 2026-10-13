@@ -172,15 +172,17 @@ container** — serverless functions (Vercel/Netlify) cannot run it.
 
 ### Instant public demo (what's running now)
 
-`npm run build && npm start`, then expose it with a Cloudflare quick tunnel —
-no account, no payment:
+One command starts the DB, opens a Cloudflare quick tunnel, writes the public
+URL into `.env`, and boots the production build:
 
 ```bash
-cloudflared tunnel --url http://localhost:3000   # prints a public https URL
+npm run public        # after `npm run build`
 ```
 
-The tunnel URL is ephemeral (changes each run). For a permanent URL use a free
-named Cloudflare tunnel, or deploy the Docker image to a persistent host.
+Or manually: `npm run db:start` + `npm start` + `cloudflared tunnel --url
+http://localhost:3000`. The tunnel URL is ephemeral (changes each run). For a
+permanent URL use a free named Cloudflare tunnel, or deploy the Docker image
+to a persistent host.
 
 ### Scaling path (when you need it)
 
