@@ -18,6 +18,8 @@ import path from "node:path";
 const children: ChildProcess[] = [];
 const envPath = path.join(process.cwd(), ".env");
 const readmePath = path.join(process.cwd(), "README.md");
+const liveUrlPath = path.join(process.cwd(), "LIVE_URL.txt");
+const stableUrlPath = path.join(process.cwd(), "STABLE_URL.txt");
 const NPM = process.platform === "win32" ? "npm.cmd" : "npm";
 const CLOUDFLARED = path.resolve("cloudflared.exe");
 const REPO = "saiganesh-09/ai-world-cup-recap-generator";
@@ -41,6 +43,17 @@ function sh(cmd: string, args: string[]) {
   return r.status === 0;
 }
 
+/** Branded front-door URL (workers.dev) if configured, else the tunnel. */
+function publicUrl(tunnelUrl: string) {
+  try {
+    const stable = readFileSync(stableUrlPath, "utf8").trim();
+    if (stable.startsWith("https://")) return stable.replace(/\/$/, "");
+  } catch {
+    /* no stable URL yet */
+  }
+  return tunnelUrl;
+}
+
 function setEnvUrl(url: string) {
   const env = readFileSync(envPath, "utf8");
   const next = env.match(/^NEXT_PUBLIC_APP_URL=.*$/m)
@@ -49,28 +62,32 @@ function setEnvUrl(url: string) {
   writeFileSync(envPath, next);
 }
 
-/** Point README + GitHub repo homepage at the fresh tunnel URL. */
-function syncPublicUrl(url: string) {
-  // README: replace any previous tunnel URL
+/** Publish the fresh URL to .env, LIVE_URL.txt (worker proxy source),
+ *  README, and the GitHub repo homepage field. */
+function syncPublicUrl(tunnelUrl: string) {
+  const url = publicUrl(tunnelUrl);
+  setEnvUrl(url);
+
+  writeFileSync(liveUrlPath, tunnelUrl + "\n");
+
   const readme = readFileSync(readmePath, "utf8");
   const updated = readme.replace(TUNNEL_HOST_RE, url);
-  if (updated !== readme) {
-    writeFileSync(readmePath, updated);
-    sh("git", ["add", "README.md"]);
-    sh("git", [
-      "-c",
-      "user.email=devin-ai-integration[bot]@users.noreply.github.com",
-      "-c",
-      "user.name=public-url-bot",
-      "commit",
-      "-q",
-      "-m",
-      "chore: refresh live demo tunnel URL",
-    ]);
-    sh("git", ["push", "-q"]);
-    console.log("[public] README + GitHub updated to", url);
-  }
+  if (updated !== readme) writeFileSync(readmePath, updated);
+
+  sh("git", ["add", "README.md", "LIVE_URL.txt"]);
+  sh("git", [
+    "-c",
+    "user.email=devin-ai-integration[bot]@users.noreply.github.com",
+    "-c",
+    "user.name=public-url-bot",
+    "commit",
+    "-q",
+    "-m",
+    "chore: refresh live demo tunnel URL",
+  ]);
+  sh("git", ["push", "-q"]);
   sh("gh", ["repo", "edit", REPO, "--homepage", url]);
+  console.log("[public] URLs synced →", url);
 }
 
 function waitForTunnelUrl(tunnel: ChildProcess): Promise<string> {
@@ -102,10 +119,9 @@ async function main() {
     "--no-autoupdate",
   ]);
   const url = await waitForTunnelUrl(tunnel);
-  setEnvUrl(url);
   syncPublicUrl(url);
 
-  console.log(`\n[public] LIVE → ${url}\n`);
+  console.log(`\n[public] LIVE → ${publicUrl(url)}\n`);
   console.log("[public] starting production server on :3000...");
   run(NPM, ["start"], false, true);
   console.log("[public] Ctrl+C stops DB + app + tunnel.\n");
