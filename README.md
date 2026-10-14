@@ -179,6 +179,11 @@ URL into `.env`, and boots the production build:
 npm run public        # after `npm run build`
 ```
 
+The script also **re-publishes the fresh tunnel URL automatically** — it
+updates `.env`, the GitHub repo homepage field, and this README, then commits
+and pushes. `start-public.bat` (installed in the Windows Startup folder as
+`WCRecapPublicDemo.bat`) runs it at every logon, so reboots self-heal.
+
 Or manually: `npm run db:start` + `npm start` + `cloudflared tunnel --url
 http://localhost:3000`. The tunnel URL is ephemeral (changes each run). For a
 permanent URL use a free named Cloudflare tunnel, or deploy the Docker image
