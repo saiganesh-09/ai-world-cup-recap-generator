@@ -1,1 +1,1 @@
-https://college-design-remind-vacations.trycloudflare.com
+https://api.trycloudflare.com
