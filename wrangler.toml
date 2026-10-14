@@ -2,3 +2,7 @@ name = "wc-recap"
 main = "worker/proxy.js"
 compatibility_date = "2026-10-14"
 workers_dev = true
+
+[[kv_namespaces]]
+binding = "LIVE_URL"
+id = "6a8abedaa28648aeaf07022e56709724"

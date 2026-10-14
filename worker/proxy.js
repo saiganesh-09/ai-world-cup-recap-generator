@@ -3,18 +3,15 @@
  *
  * The demo app is served locally and exposed through a Cloudflare quick
  * tunnel whose hostname rotates on every restart. This Worker fronts it
- * with a stable workers.dev URL: each request resolves the current
- * tunnel origin from LIVE_URL.txt in the GitHub repo (kept fresh by
- * scripts/serve-public.ts on every boot) and proxies through.
+ * with a stable workers.dev URL: the current tunnel origin lives in the
+ * LIVE_URL KV namespace (key "current"), written by
+ * scripts/serve-public.ts on every boot and tunnel restart.
  */
-const LIVE_URL_TXT =
-  "https://raw.githubusercontent.com/saiganesh-09/ai-world-cup-recap-generator/main/LIVE_URL.txt";
-
 const WORKER_HOST_RE = /^https:\/\/[^/]+/;
 
 export default {
-  async fetch(request) {
-    const upstream = await currentUpstream();
+  async fetch(request, env) {
+    const upstream = (await env.LIVE_URL.get("current"))?.replace(/\/$/, "");
     if (!upstream) {
       return new Response("Demo is starting — try again in a few seconds.", {
         status: 502,
@@ -41,12 +38,3 @@ export default {
     return resp;
   },
 };
-
-async function currentUpstream() {
-  const resp = await fetch(LIVE_URL_TXT, {
-    cf: { cacheTtl: 20, cacheEverything: true },
-  });
-  if (!resp.ok) return null;
-  const text = (await resp.text()).trim();
-  return text.startsWith("https://") ? text.replace(/\/$/, "") : null;
-}

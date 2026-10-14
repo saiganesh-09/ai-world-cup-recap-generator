@@ -1,21 +1,24 @@
 /**
  * One-command public demo startup — self-healing.
  *
- * Starts the embedded dev DB, opens a Cloudflare quick tunnel, writes
- * the public URL into .env, syncs the URL to the GitHub repo homepage
- * field + README, then boots the production build.
+ * - Starts the embedded dev DB (skipped if already listening)
+ * - Opens a Cloudflare quick tunnel and writes the URL to .env,
+ *   LIVE_URL.txt (worker proxy source), README, and the GitHub
+ *   repo homepage field — then commits & pushes
+ * - Boots the production build (skipped if already listening)
+ * - Watches the tunnel and restarts + re-publishes if it dies
+ *   (laptop sleep, network drops)
  *
- * Designed to run on Windows logon via Task Scheduler: every restart
- * mints a fresh tunnel URL and re-publishes it automatically.
+ * Installed at Windows logon via start-public.bat in the Startup folder.
  *
  * Usage:  npm run public        (run `npm run build` first)
  * Keep this running; Ctrl+C stops everything.
  */
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
-import { readFileSync, writeFileSync } from "node:fs";
+import { createConnection } from "node:net";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
-const children: ChildProcess[] = [];
 const envPath = path.join(process.cwd(), ".env");
 const readmePath = path.join(process.cwd(), "README.md");
 const liveUrlPath = path.join(process.cwd(), "LIVE_URL.txt");
@@ -23,7 +26,14 @@ const stableUrlPath = path.join(process.cwd(), "STABLE_URL.txt");
 const NPM = process.platform === "win32" ? "npm.cmd" : "npm";
 const CLOUDFLARED = path.resolve("cloudflared.exe");
 const REPO = "saiganesh-09/ai-world-cup-recap-generator";
+const KV_NAMESPACE_ID = "6a8abedaa28648aeaf07022e56709724";
 const TUNNEL_HOST_RE = /https:\/\/[a-z0-9-]+\.trycloudflare\.com/;
+const HEALTH_PATH = "/api/live";
+const WATCHDOG_MS = 45_000;
+
+const children = new Set<ChildProcess>();
+let tunnelUrl: string | null = null;
+let restarting = false;
 
 function run(cmd: string, args: string[], quiet = false, shell = false) {
   const child = spawn(cmd, args, { shell, windowsHide: true });
@@ -31,7 +41,8 @@ function run(cmd: string, args: string[], quiet = false, shell = false) {
     child.stdout?.on("data", (d) => process.stdout.write(d));
     child.stderr?.on("data", (d) => process.stderr.write(d));
   }
-  children.push(child);
+  children.add(child);
+  child.on("exit", () => children.delete(child));
   return child;
 }
 
@@ -43,15 +54,31 @@ function sh(cmd: string, args: string[]) {
   return r.status === 0;
 }
 
+function portOpen(port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const s = createConnection({ host: "127.0.0.1", port });
+    s.setTimeout(2000);
+    s.once("connect", () => {
+      s.destroy();
+      resolve(true);
+    });
+    s.once("error", () => resolve(false));
+    s.once("timeout", () => {
+      s.destroy();
+      resolve(false);
+    });
+  });
+}
+
 /** Branded front-door URL (workers.dev) if configured, else the tunnel. */
-function publicUrl(tunnelUrl: string) {
+function publicUrl(t: string) {
   try {
     const stable = readFileSync(stableUrlPath, "utf8").trim();
     if (stable.startsWith("https://")) return stable.replace(/\/$/, "");
   } catch {
     /* no stable URL yet */
   }
-  return tunnelUrl;
+  return t;
 }
 
 function setEnvUrl(url: string) {
@@ -62,13 +89,25 @@ function setEnvUrl(url: string) {
   writeFileSync(envPath, next);
 }
 
-/** Publish the fresh URL to .env, LIVE_URL.txt (worker proxy source),
- *  README, and the GitHub repo homepage field. */
-function syncPublicUrl(tunnelUrl: string) {
-  const url = publicUrl(tunnelUrl);
-  setEnvUrl(url);
+/** Write the tunnel origin into Workers KV — the branded proxy reads it. */
+function syncKv(tUrl: string) {
+  const r = spawnSync(
+    "npx",
+    ["wrangler", "kv", "key", "put", "current", tUrl, "--remote", "--namespace-id", KV_NAMESPACE_ID],
+    { shell: true, encoding: "utf8" },
+  );
+  if (r.status !== 0) {
+    console.log("[public] warn: KV sync failed", r.stderr?.slice(-200) ?? "");
+  }
+}
 
-  writeFileSync(liveUrlPath, tunnelUrl + "\n");
+/** Publish the fresh URL to .env, Workers KV, LIVE_URL.txt, README,
+ *  and the GitHub repo homepage field. */
+function syncPublicUrl(tUrl: string) {
+  const url = publicUrl(tUrl);
+  setEnvUrl(url);
+  writeFileSync(liveUrlPath, tUrl + "\n");
+  syncKv(tUrl);
 
   const readme = readFileSync(readmePath, "utf8");
   const updated = readme.replace(TUNNEL_HOST_RE, url);
@@ -92,7 +131,10 @@ function syncPublicUrl(tunnelUrl: string) {
 
 function waitForTunnelUrl(tunnel: ChildProcess): Promise<string> {
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error("tunnel URL timeout")), 30_000);
+    const timer = setTimeout(
+      () => reject(new Error("tunnel URL timeout")),
+      60_000,
+    );
     tunnel.stderr?.on("data", (chunk: Buffer) => {
       const m = chunk.toString().match(TUNNEL_HOST_RE);
       if (m) {
@@ -106,12 +148,7 @@ function waitForTunnelUrl(tunnel: ChildProcess): Promise<string> {
   });
 }
 
-async function main() {
-  console.log("[public] starting embedded Postgres...");
-  run(NPM, ["run", "db:start"], true, true);
-  await new Promise((r) => setTimeout(r, 8000));
-
-  console.log("[public] opening Cloudflare tunnel...");
+async function openTunnel(): Promise<ChildProcess> {
   const tunnel = run(CLOUDFLARED, [
     "tunnel",
     "--url",
@@ -119,12 +156,59 @@ async function main() {
     "--no-autoupdate",
   ]);
   const url = await waitForTunnelUrl(tunnel);
+  tunnelUrl = url;
   syncPublicUrl(url);
+  console.log(`[public] tunnel live → ${publicUrl(url)}`);
+  return tunnel;
+}
 
-  console.log(`\n[public] LIVE → ${publicUrl(url)}\n`);
-  console.log("[public] starting production server on :3000...");
-  run(NPM, ["start"], false, true);
+/** Restart the tunnel when it dies (sleep, network drop, CF eviction). */
+async function watchTunnel() {
+  if (!tunnelUrl || restarting) return;
+  let alive = false;
+  try {
+    const r = await fetch(tunnelUrl + HEALTH_PATH, {
+      signal: AbortSignal.timeout(10_000),
+    });
+    alive = r.ok;
+  } catch {
+    alive = false;
+  }
+  if (alive) return;
+
+  restarting = true;
+  console.log("[public] tunnel unreachable — restarting...");
+  try {
+    const old = [...children].find((c) => c.spawnfile === CLOUDFLARED);
+    old?.kill("SIGTERM");
+    await openTunnel();
+  } catch (e) {
+    console.log("[public] tunnel restart failed:", e);
+  } finally {
+    restarting = false;
+  }
+}
+
+async function main() {
+  if (await portOpen(5433)) {
+    console.log("[public] Postgres already running on :5433");
+  } else {
+    console.log("[public] starting embedded Postgres...");
+    run(NPM, ["run", "db:start"], true, true);
+    await new Promise((r) => setTimeout(r, 8000));
+  }
+
+  await openTunnel();
+
+  if (await portOpen(3000)) {
+    console.log("[public] app already running on :3000");
+  } else {
+    console.log("[public] starting production server on :3000...");
+    run(NPM, ["start"], false, true);
+  }
+
   console.log("[public] Ctrl+C stops DB + app + tunnel.\n");
+  setInterval(watchTunnel, WATCHDOG_MS);
 
   const shutdown = () => {
     console.log("\n[public] shutting down...");
