@@ -34,6 +34,9 @@ const WATCHDOG_MS = 45_000;
 const children = new Set<ChildProcess>();
 let tunnelUrl: string | null = null;
 let restarting = false;
+/** New tunnels need ~1 min for DNS/edge propagation before health checks. */
+let tunnelGraceUntil = 0;
+let failStreak = 0;
 
 function run(cmd: string, args: string[], quiet = false, shell = false) {
   const child = spawn(cmd, args, { shell, windowsHide: true });
@@ -92,12 +95,20 @@ function setEnvUrl(url: string) {
 /** Write the tunnel origin into Workers KV — the branded proxy reads it. */
 function syncKv(tUrl: string) {
   const r = spawnSync(
-    "npx",
-    ["wrangler", "kv", "key", "put", "current", tUrl, "--remote", "--namespace-id", KV_NAMESPACE_ID],
-    { shell: true, encoding: "utf8" },
+    process.execPath,
+    [
+      path.resolve("node_modules/wrangler/bin/wrangler.js"),
+      "kv", "key", "put", "current", tUrl,
+      "--remote",
+      "--namespace-id", KV_NAMESPACE_ID,
+    ],
+    { encoding: "utf8", timeout: 60_000 },
   );
   if (r.status !== 0) {
-    console.log("[public] warn: KV sync failed", r.stderr?.slice(-200) ?? "");
+    console.log(
+      "[public] warn: KV sync failed",
+      (r.stderr || r.stdout || "").slice(-200),
+    );
   }
 }
 
@@ -157,14 +168,18 @@ async function openTunnel(): Promise<ChildProcess> {
   ]);
   const url = await waitForTunnelUrl(tunnel);
   tunnelUrl = url;
+  tunnelGraceUntil = Date.now() + 90_000;
+  failStreak = 0;
   syncPublicUrl(url);
   console.log(`[public] tunnel live → ${publicUrl(url)}`);
   return tunnel;
 }
 
-/** Restart the tunnel when it dies (sleep, network drop, CF eviction). */
+/** Restart the tunnel when it dies (sleep, network drop, CF eviction).
+ *  Requires two consecutive failures and skips the post-spawn grace
+ *  window so DNS propagation isn't mistaken for a dead tunnel. */
 async function watchTunnel() {
-  if (!tunnelUrl || restarting) return;
+  if (!tunnelUrl || restarting || Date.now() < tunnelGraceUntil) return;
   let alive = false;
   try {
     const r = await fetch(tunnelUrl + HEALTH_PATH, {
@@ -174,9 +189,17 @@ async function watchTunnel() {
   } catch {
     alive = false;
   }
-  if (alive) return;
+  if (alive) {
+    failStreak = 0;
+    return;
+  }
+  if (++failStreak < 2) {
+    console.log("[public] tunnel check failed (1st) — rechecking next cycle");
+    return;
+  }
 
   restarting = true;
+  failStreak = 0;
   console.log("[public] tunnel unreachable — restarting...");
   try {
     const old = [...children].find((c) => c.spawnfile === CLOUDFLARED);
