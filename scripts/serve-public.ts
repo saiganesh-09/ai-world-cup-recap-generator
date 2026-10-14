@@ -27,7 +27,9 @@ const NPM = process.platform === "win32" ? "npm.cmd" : "npm";
 const CLOUDFLARED = path.resolve("cloudflared.exe");
 const REPO = "saiganesh-09/ai-world-cup-recap-generator";
 const KV_NAMESPACE_ID = "6a8abedaa28648aeaf07022e56709724";
-const TUNNEL_HOST_RE = /https:\/\/[a-z0-9-]+\.trycloudflare\.com/;
+// Quick tunnels are always 4 hyphenated words — excludes api.trycloudflare.com
+// which cloudflared prints in its terms-of-use banner.
+const TUNNEL_HOST_RE = /https:\/\/[a-z]+(?:-[a-z]+){3}\.trycloudflare\.com/;
 const HEALTH_PATH = "/api/live";
 const WATCHDOG_MS = 45_000;
 
