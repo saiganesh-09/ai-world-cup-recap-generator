@@ -16,7 +16,7 @@
  */
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { createConnection } from "node:net";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
 const envPath = path.join(process.cwd(), ".env");

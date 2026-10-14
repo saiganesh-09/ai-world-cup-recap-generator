@@ -9,7 +9,7 @@
  */
 const WORKER_HOST_RE = /^https:\/\/[^/]+/;
 
-export default {
+const proxy = {
   async fetch(request, env) {
     const upstream = (await env.LIVE_URL.get("current"))?.replace(/\/$/, "");
     if (!upstream) {
@@ -38,3 +38,5 @@ export default {
     return resp;
   },
 };
+
+export default proxy;
