@@ -39,6 +39,8 @@ let restarting = false;
 /** New tunnels need ~1 min for DNS/edge propagation before health checks. */
 let tunnelGraceUntil = 0;
 let failStreak = 0;
+/** Set when a KV write failed (e.g. network not up at boot) — retried later. */
+let kvDirty = false;
 
 function run(cmd: string, args: string[], quiet = false, shell = false) {
   const child = spawn(cmd, args, { shell, windowsHide: true });
@@ -107,10 +109,13 @@ function syncKv(tUrl: string) {
     { encoding: "utf8", timeout: 60_000 },
   );
   if (r.status !== 0) {
+    kvDirty = true;
     console.log(
       "[public] warn: KV sync failed",
       (r.stderr || r.stdout || "").slice(-200),
     );
+  } else {
+    kvDirty = false;
   }
 }
 
@@ -182,6 +187,10 @@ async function openTunnel(): Promise<ChildProcess> {
  *  window so DNS propagation isn't mistaken for a dead tunnel. */
 async function watchTunnel() {
   if (!tunnelUrl || restarting || Date.now() < tunnelGraceUntil) return;
+  if (kvDirty) {
+    console.log("[public] retrying KV sync...");
+    syncKv(tunnelUrl);
+  }
   let alive = false;
   try {
     const r = await fetch(tunnelUrl + HEALTH_PATH, {
