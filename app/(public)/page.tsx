@@ -13,6 +13,7 @@ import {
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/primitives";
 import { Flag } from "@/components/ui/flag";
+import { LiveMatchCard, type LiveMatchData } from "@/components/live-match";
 import { prisma } from "@/lib/prisma";
 
 const features = [
@@ -73,19 +74,41 @@ export default async function HomePage() {
     prisma.recap.count(),
   ]);
 
-  // Live-score widget — real seeded match (India's upset over USA, 2026 demo).
+  // Live-score widget — the seeded LIVE match, simulated in real time.
   const live = await prisma.match.findFirst({
-    where: { tournamentId: "seed-2026", homeTeamId: "seed-2026-IND" },
+    where: { status: "LIVE" },
     include: {
       homeTeam: true,
       awayTeam: true,
       teamStats: true,
-      events: { include: { player: true, team: true }, orderBy: { minute: "desc" }, take: 3 },
+      events: { include: { player: true, team: true } },
     },
-    orderBy: { date: "desc" },
   });
-  const homeStat = live?.teamStats.find((s) => s.teamId === live.homeTeamId);
-  const awayStat = live?.teamStats.find((s) => s.teamId === live.awayTeamId);
+  const liveData: LiveMatchData | null = live
+    ? {
+        homeShort: live.homeTeam.shortName,
+        awayShort: live.awayTeam.shortName,
+        homeCountry: live.homeTeam.country,
+        awayCountry: live.awayTeam.country,
+        homeTeamId: live.homeTeamId,
+        awayTeamId: live.awayTeamId,
+        finalHome: live.homeScore,
+        finalAway: live.awayScore,
+        stage: live.stage,
+        groupName: live.groupName,
+        homeStats: live.teamStats.find((s) => s.teamId === live.homeTeamId) ?? null,
+        awayStats: live.teamStats.find((s) => s.teamId === live.awayTeamId) ?? null,
+        events: live.events.map((e) => ({
+          id: e.id,
+          minute: e.minute,
+          extraMinute: e.extraMinute,
+          type: e.type,
+          description: e.description,
+          player: e.player?.name ?? null,
+          teamId: e.teamId,
+        })),
+      }
+    : null;
 
   return (
     <>
@@ -135,83 +158,10 @@ export default async function HomePage() {
       </section>
 
       {/* ── Live score strip ── */}
-      {live && (
+      {liveData && (
         <section className="border-t border-line/60">
           <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
-            <Card className="overflow-hidden">
-              <div className="flex items-center justify-between border-b border-line/60 px-5 py-3">
-                <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  Featured Match
-                </span>
-                <span className="flex items-center gap-2 text-xs text-slate-500">
-                  {live.stage === "GROUP" ? `Group ${live.groupName ?? ""}` : live.stage.replace(/_/g, " ")}
-                  <span className="rounded-full bg-red-500/15 px-2 py-0.5 font-semibold text-red-400">FT</span>
-                </span>
-              </div>
-              <div className="px-5 py-6">
-                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
-                  <div className="flex items-center gap-3">
-                    <Flag country={live.homeTeam.country} className="h-6 w-9 rounded" />
-                    <span className="text-lg font-bold">{live.homeTeam.shortName}</span>
-                  </div>
-                  <div className="rounded-xl bg-black/40 px-5 py-2 text-center font-mono text-3xl font-extrabold">
-                    {live.homeScore} : {live.awayScore}
-                  </div>
-                  <div className="flex items-center justify-end gap-3">
-                    <span className="text-lg font-bold">{live.awayTeam.shortName}</span>
-                    <Flag country={live.awayTeam.country} className="h-6 w-9 rounded" />
-                  </div>
-                </div>
-                {homeStat && awayStat && (
-                  <div className="mt-6 space-y-2.5 text-xs text-slate-400">
-                    <div className="flex justify-between font-mono">
-                      <span>{Math.round(homeStat.possession)}%</span>
-                      <span className="uppercase tracking-wider text-slate-500">Possession</span>
-                      <span>{Math.round(awayStat.possession)}%</span>
-                    </div>
-                    <div className="flex h-1.5 overflow-hidden rounded-full bg-surface-2">
-                      <div className="bg-gold" style={{ width: `${homeStat.possession}%` }} />
-                      <div className="bg-sky-500" style={{ width: `${awayStat.possession}%` }} />
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 pt-2 text-center font-mono">
-                      <div>
-                        <span className="text-white">{homeStat.shots} ({homeStat.shotsOnTarget})</span>
-                        <span className="mx-2 text-slate-600">—</span>
-                        <span className="text-white">{awayStat.shots} ({awayStat.shotsOnTarget})</span>
-                        <p className="mt-0.5 text-[10px] uppercase tracking-wider text-slate-500">Shots (OT)</p>
-                      </div>
-                      <div>
-                        <span className="text-white">{homeStat.corners}</span>
-                        <span className="mx-2 text-slate-600">—</span>
-                        <span className="text-white">{awayStat.corners}</span>
-                        <p className="mt-0.5 text-[10px] uppercase tracking-wider text-slate-500">Corners</p>
-                      </div>
-                      <div>
-                        <span className="text-white">{homeStat.fouls}</span>
-                        <span className="mx-2 text-slate-600">—</span>
-                        <span className="text-white">{awayStat.fouls}</span>
-                        <p className="mt-0.5 text-[10px] uppercase tracking-wider text-slate-500">Fouls</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                {live.events.length > 0 && (
-                  <div className="mt-5 space-y-2 border-t border-line/50 pt-4">
-                    {live.events.map((e) => (
-                      <div key={e.id} className="flex items-center gap-3 text-sm">
-                        <span className="w-10 font-mono text-xs text-slate-500">
-                          {e.minute}{e.extraMinute ? `+${e.extraMinute}` : ""}&rsquo;
-                        </span>
-                        <span className={`h-2 w-2 rounded-full ${e.type.includes("GOAL") ? "bg-emerald-400" : "bg-yellow-400"}`} />
-                        <span className="text-slate-300">
-                          {e.description ?? `${e.player?.name ?? e.team?.name ?? ""} — ${e.type.replace(/_/g, " ").toLowerCase()}`}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </Card>
+            <LiveMatchCard match={liveData} />
           </div>
         </section>
       )}

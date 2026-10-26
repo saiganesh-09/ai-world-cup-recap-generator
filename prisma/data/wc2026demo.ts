@@ -181,7 +181,7 @@ export const wc2026demo: SeedTournament = {
     },
     {
       home: "IND", away: "USA", h: 2, a: 1, date: "2026-06-23", venue: "Azteca Stadium",
-      stage: "GROUP", group: "A",
+      stage: "GROUP", group: "A", status: "LIVE",
       events: [
         { min: 14, type: "GOAL", team: "USA", player: "Christian Pulisic", detail: "Free kick" },
         { min: 41, type: "GOAL", team: "IND", player: "Lallianzuala Chhangte", description: "Chhangte levels on the counter — the stadium erupts" },

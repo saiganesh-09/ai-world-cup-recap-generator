@@ -111,7 +111,7 @@ async function seedTournament(t: SeedTournament) {
         venue: m.venue,
         stage: m.stage,
         groupName: m.group,
-        status: "FINISHED",
+        status: m.status ?? "FINISHED",
         homeScore: m.h,
         awayScore: m.a,
         homePenScore: m.hp,

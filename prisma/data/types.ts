@@ -63,6 +63,8 @@ export interface SeedMatch {
     | "THIRD_PLACE"
     | "FINAL";
   group?: string;
+  /** defaults to FINISHED; mark LIVE for the featured-match widget */
+  status?: "SCHEDULED" | "LIVE" | "FINISHED";
   events?: SeedEvent[];
 }
 
