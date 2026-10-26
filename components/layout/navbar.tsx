@@ -7,13 +7,13 @@ import { MobileNav } from "./mobile-nav";
 export async function Navbar() {
   const user = await getCurrentUser();
   return (
-    <header className="sticky top-0 z-40 border-b border-line/60 bg-pitch/85 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-2.5 font-bold text-lg tracking-tight">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gold text-slate-950">
-            <Trophy size={20} strokeWidth={2.4} />
+    <header className="sticky top-4 z-40 px-4">
+      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between rounded-full border border-line/70 bg-surface/85 px-5 backdrop-blur-md">
+        <Link href="/" className="flex items-center gap-2.5 font-bold tracking-tight">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gold text-slate-950">
+            <Trophy size={17} strokeWidth={2.4} />
           </span>
-          <span className="hidden sm:inline">World Cup Recap</span>
+          <span className="hidden sm:inline">WC Recap.ai</span>
         </Link>
         <nav className="hidden items-center gap-6 text-sm text-muted md:flex" aria-label="Main">
           <Link href="/teams" className="hover:text-white transition-colors">Teams</Link>
@@ -27,7 +27,7 @@ export async function Navbar() {
           ) : (
             <>
               <ButtonLink href="/login" variant="ghost" size="sm">Sign in</ButtonLink>
-              <ButtonLink href="/signup" size="sm">Get started</ButtonLink>
+              <ButtonLink href="/create" size="sm">Create My Recap</ButtonLink>
             </>
           )}
         </div>
