@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Clapperboard, Star, TrendingUp, Trophy, Video } from "lucide-react";
+import { Clapperboard, Flame, Star, TrendingUp, Trophy, Video, Zap } from "lucide-react";
 import { RecapCard } from "@/components/recap/recap-card";
 import { ButtonLink } from "@/components/ui/button";
 import { Badge, Card, TeamCrest } from "@/components/ui/primitives";
+import { Flag } from "@/components/ui/flag";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { recapRepo } from "@/repositories/recap.repository";
+import { matchRepo } from "@/repositories/sports.repository";
+import { computeMoments } from "@/services/moments.service";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -20,21 +23,50 @@ export default async function DashboardPage() {
   const favoriteTeamId = [...teamCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0];
   const favoriteTeam = favoriteTeamId ? recaps.find((r) => r.teamId === favoriteTeamId)?.team : null;
 
-  // Recommended players — highest tournament ratings.
+  // Recommended players — highest tournament ratings, deduped by name
+  // (the same player appears once per tournament in the seed).
   const topPlayers = await prisma.playerMatchStat.groupBy({
     by: ["playerId"],
     _avg: { rating: true },
     _sum: { goals: true },
     orderBy: { _avg: { rating: "desc" } },
-    take: 6,
+    take: 20,
   });
   const recommended = await prisma.player.findMany({
     where: { id: { in: topPlayers.map((p) => p.playerId) } },
     include: { team: true },
   });
+  const seenNames = new Set<string>();
   const recommendedSorted = topPlayers
     .map((t) => ({ player: recommended.find((p) => p.id === t.playerId)!, rating: t._avg.rating, goals: t._sum.goals }))
-    .filter((x) => x.player);
+    .filter((x) => {
+      if (!x.player || seenNames.has(x.player.name)) return false;
+      seenNames.add(x.player.name);
+      return true;
+    })
+    .slice(0, 6);
+
+  // Tournament-defining moments — real engine output over the 2022 knockouts.
+  const knockoutMatches = [
+    ...(await matchRepo.forTournament("seed-2022", "FINAL")),
+    ...(await matchRepo.forTournament("seed-2022", "SEMI_FINAL")),
+    ...(await matchRepo.forTournament("seed-2022", "QUARTER_FINAL")),
+  ];
+  const globalMoments = computeMoments(knockoutMatches, {}, 5);
+
+  // Quick-pick teams for one-click recap creation.
+  const quickTeams = await prisma.team.findMany({
+    where: { id: { in: ["seed-2022-ARG", "seed-2026-IND", "seed-2022-FRA", "seed-2022-JPN"] } },
+    include: { tournaments: true },
+  });
+  const quickPicks = [
+    { teamId: "seed-2022-ARG", tournamentId: "seed-2022" },
+    { teamId: "seed-2026-IND", tournamentId: "seed-2026" },
+    { teamId: "seed-2022-FRA", tournamentId: "seed-2022" },
+    { teamId: "seed-2022-JPN", tournamentId: "seed-2022" },
+  ]
+    .map((q) => ({ ...q, team: quickTeams.find((t) => t.id === q.teamId)! }))
+    .filter((q) => q.team);
 
   const ready = recaps.filter((r) => r.status === "READY").length;
   const latest = recaps[0];
@@ -92,6 +124,30 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
+      {/* Quick-start picks */}
+      <section>
+        <h2 className="flex items-center gap-2 font-semibold">
+          <Zap size={16} className="text-gold" /> Start a recap in one click
+        </h2>
+        <div className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {quickPicks.map(({ team, tournamentId }) => (
+            <Link key={team.id} href={`/create?tournament=${tournamentId}&team=${team.id}`}>
+              <Card hover className="flex items-center gap-3 p-4">
+                <TeamCrest short={team.shortName} color={team.primaryColor} size={40} />
+                <div className="min-w-0">
+                  <p className="flex items-center gap-1.5 truncate font-semibold">
+                    <Flag country={team.country} /> {team.name}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {tournamentId === "seed-2026" ? "World Cup 2026" : "World Cup 2022"}
+                  </p>
+                </div>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       <div className="grid gap-8 lg:grid-cols-3">
         {/* Recent recaps */}
         <section className="lg:col-span-2">
@@ -103,7 +159,7 @@ export default async function DashboardPage() {
           </div>
           {recaps.length === 0 ? (
             <Card className="mt-4 p-10 text-center">
-              <p className="text-sm text-muted">No recaps yet — create your first story.</p>
+              <p className="text-sm text-muted">No recaps yet — pick a team above or build your own.</p>
               <ButtonLink href="/create" className="mt-4">Create My Recap</ButtonLink>
             </Card>
           ) : (
@@ -113,6 +169,28 @@ export default async function DashboardPage() {
               ))}
             </div>
           )}
+        </section>
+
+        {/* Sidebar column */}
+        <div className="space-y-8">
+        {/* Moments that defined the tournament */}
+        <section>
+          <h2 className="flex items-center gap-2 font-semibold">
+            <Flame size={16} className="text-orange-400" /> Moments that defined 2022
+          </h2>
+          <Card className="mt-4 divide-y divide-line/50">
+            {globalMoments.map((m, i) => (
+              <div key={i} className="flex gap-3 px-4 py-3">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-gold/15 text-xs font-bold text-gold">
+                  {m.importanceScore}
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{m.title}</p>
+                  <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">{m.description}</p>
+                </div>
+              </div>
+            ))}
+          </Card>
         </section>
 
         {/* Recommended players */}
@@ -138,6 +216,7 @@ export default async function DashboardPage() {
             ))}
           </Card>
         </section>
+        </div>
       </div>
     </div>
   );

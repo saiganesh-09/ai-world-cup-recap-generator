@@ -66,11 +66,19 @@ const NEEDS_PLAYER: string[] = ["PLAYER_JOURNEY"];
 
 const STEPS = ["Tournament", "Focus", "Type", "Tone", "Length", "Review"];
 
-export function CreateWizard({ tournaments }: { tournaments: Tournament[] }) {
+export function CreateWizard({
+  tournaments,
+  initialTournamentId,
+  initialTeamId,
+}: {
+  tournaments: Tournament[];
+  initialTournamentId?: string;
+  initialTeamId?: string;
+}) {
   const router = useRouter();
   const [step, setStep] = useState(0);
-  const [tournamentId, setTournamentId] = useState("");
-  const [teamId, setTeamId] = useState("");
+  const [tournamentId, setTournamentId] = useState(initialTournamentId ?? "");
+  const [teamId, setTeamId] = useState(initialTeamId ?? "");
   const [playerId, setPlayerId] = useState("");
   const [type, setType] = useState<string>("TEAM_JOURNEY");
   const [tone, setTone] = useState<string>("EXCITING");
