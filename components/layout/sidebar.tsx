@@ -26,7 +26,7 @@ const items = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-export function Sidebar({ userName }: { userName: string }) {
+export function Sidebar({ userName }: { userName: string | null }) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -59,14 +59,25 @@ export function Sidebar({ userName }: { userName: string }) {
         })}
       </nav>
       <div className="border-t border-line/60 p-4">
-        <p className="truncate px-2 pb-2 text-xs text-slate-500">Signed in as {userName}</p>
-        <button
-          onClick={logout}
-          className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white transition-colors"
-        >
-          <LogOut size={18} />
-          Sign out
-        </button>
+        {userName ? (
+          <>
+            <p className="truncate px-2 pb-2 text-xs text-slate-500">Signed in as {userName}</p>
+            <button
+              onClick={logout}
+              className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm text-slate-400 hover:bg-white/5 hover:text-white transition-colors"
+            >
+              <LogOut size={18} />
+              Sign out
+            </button>
+          </>
+        ) : (
+          <Link
+            href="/login"
+            className="flex w-full items-center justify-center rounded-xl bg-gold px-4 py-2.5 text-sm font-semibold text-slate-950 hover:bg-amber-300 transition-colors"
+          >
+            Sign in
+          </Link>
+        )}
       </div>
     </aside>
   );
