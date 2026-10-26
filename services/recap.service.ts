@@ -74,34 +74,38 @@ export async function runRecapPipeline(recap: Recap, jobId: string) {
     await mkdir(workDir, { recursive: true });
     const framePaths = await renderFrames(slides, workDir);
 
-    // 5) Video
+    // 5) Video — may be unavailable on read-only filesystems
+    //    (e.g. serverless without object storage); degrade to a
+    //    story-only recap rather than failing the job.
     await setStage("RENDERING_VIDEO");
     const totalSec = slideTotal(slides);
-    const bedPath = path.join(workDir, "bed.wav");
-    const narrationPath = path.join(workDir, "narration.mp3");
-    const audioPath = path.join(workDir, "audio.aac");
-    await synthBed(totalSec, bedPath);
-    const narrated = await synthNarration(
-      `${story.shortSummary} ${story.finalVerdict}`,
-      narrationPath,
-    );
-    await mixAudio(bedPath, narrated ? narrationPath : null, audioPath);
-
-    const outDir = path.join(MEDIA_ROOT, "recaps");
-    const videoPath = path.join(outDir, `${recap.id}.mp4`);
-    await renderVideo({
-      framePaths,
-      slides,
-      audioPath,
-      workDir,
-      outPath: videoPath,
-    });
-
-    const thumbPath = path.join(outDir, `${recap.id}.jpg`);
+    let videoUrl: string | null = null;
+    let thumbnailUrl: string | null = null;
     try {
-      await extractThumbnail(videoPath, thumbPath);
-    } catch {
-      // thumbnail is nice-to-have — never fail the job over it
+      const bedPath = path.join(workDir, "bed.wav");
+      const narrationPath = path.join(workDir, "narration.mp3");
+      const audioPath = path.join(workDir, "audio.aac");
+      await synthBed(totalSec, bedPath);
+      const narrated = await synthNarration(
+        `${story.shortSummary} ${story.finalVerdict}`,
+        narrationPath,
+      );
+      await mixAudio(bedPath, narrated ? narrationPath : null, audioPath);
+
+      const outDir = path.join(MEDIA_ROOT, "recaps");
+      const videoPath = path.join(outDir, `${recap.id}.mp4`);
+      await renderVideo({ framePaths, slides, audioPath, workDir, outPath: videoPath });
+      videoUrl = `/generated/recaps/${recap.id}.mp4`;
+
+      const thumbPath = path.join(outDir, `${recap.id}.jpg`);
+      try {
+        await extractThumbnail(videoPath, thumbPath);
+        thumbnailUrl = `/generated/recaps/${recap.id}.jpg`;
+      } catch {
+        // thumbnail is nice-to-have
+      }
+    } catch (err) {
+      console.error(`[pipeline] video render unavailable for ${recap.id}:`, err);
     }
 
     // 6) Finalize
@@ -109,10 +113,10 @@ export async function runRecapPipeline(recap: Recap, jobId: string) {
     const durationSec = Math.round(totalSec);
     await recapRepo.update(recap.id, {
       status: "READY",
-      videoUrl: `/generated/recaps/${recap.id}.mp4`,
-      thumbnailUrl: `/generated/recaps/${recap.id}.jpg`,
+      videoUrl,
+      thumbnailUrl,
       durationSec,
-      error: null,
+      error: videoUrl ? null : "Video rendering unavailable in this environment",
     });
     await jobRepo.complete(jobId);
     await prisma.analyticsEvent.create({
