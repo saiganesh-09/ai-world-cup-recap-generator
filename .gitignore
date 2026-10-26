@@ -45,3 +45,4 @@ next-env.d.ts
 
 # generated media
 /public/generated/
+/test-results/

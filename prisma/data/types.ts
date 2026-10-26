@@ -34,6 +34,8 @@ export type SeedEventType =
 
 export interface SeedEvent {
   min: number;
+  /** additional stoppage/extra minutes, e.g. 90+4 */
+  extraMinute?: number;
   type: SeedEventType;
   /** team ref that the event belongs to */
   team: string;
