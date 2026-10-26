@@ -11,7 +11,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge, Card, Input, TeamCrest } from "@/components/ui/primitives";
+import { Badge, Card, Input } from "@/components/ui/primitives";
 import { Flag } from "@/components/ui/flag";
 
 // ── Types (serialized from server) ──────────────────────────
@@ -283,8 +283,7 @@ export function CreateWizard({
                     teamId === t.id ? "border-gold bg-gold/10" : "border-line bg-surface hover:border-sky-500/50"
                   }`}
                 >
-                  <TeamCrest short={t.shortName} color={t.primaryColor} size={34} />
-                  <Flag country={t.country} size="lg" />
+                  <Flag country={t.country} size="lg" className="h-6 w-9 rounded" />
                   <span className="font-medium">{t.name}</span>
                   {teamId === t.id && <Check size={16} className="ml-auto text-gold" />}
                 </button>

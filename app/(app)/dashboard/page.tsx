@@ -133,11 +133,9 @@ export default async function DashboardPage() {
           {quickPicks.map(({ team, tournamentId }) => (
             <Link key={team.id} href={`/create?tournament=${tournamentId}&team=${team.id}`}>
               <Card hover className="flex items-center gap-3 p-4">
-                <TeamCrest short={team.shortName} color={team.primaryColor} size={40} />
+                <Flag country={team.country} className="h-8 w-12 rounded" />
                 <div className="min-w-0">
-                  <p className="flex items-center gap-1.5 truncate font-semibold">
-                    <Flag country={team.country} /> {team.name}
-                  </p>
+                  <p className="truncate font-semibold">{team.name}</p>
                   <p className="text-xs text-slate-500">
                     {tournamentId === "seed-2026" ? "World Cup 2026" : "World Cup 2022"}
                   </p>
