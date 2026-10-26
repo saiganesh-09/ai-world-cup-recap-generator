@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { SearchInput } from "@/components/search-input";
 import { Badge, Card } from "@/components/ui/primitives";
+import { Flag } from "@/components/ui/flag";
 import { playerRepo } from "@/repositories/sports.repository";
 import type { Position } from "@prisma/client";
 
@@ -66,8 +67,8 @@ export default async function PlayersPage({
               </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate font-semibold">{p.name}</p>
-                <p className="text-xs text-slate-500">
-                  {p.team.flagEmoji} {p.team.name}
+                <p className="text-xs text-slate-500 flex items-center gap-1.5">
+                  <Flag country={p.team.country} /> {p.team.name}
                 </p>
               </div>
               <Badge>{p.position}</Badge>

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { RatingChart } from "@/components/stats/rating-chart";
 import { ButtonLink } from "@/components/ui/button";
 import { Badge, Card } from "@/components/ui/primitives";
+import { Flag } from "@/components/ui/flag";
 import { playerRepo } from "@/repositories/sports.repository";
 import { matchResult } from "@/services/stats.service";
 
@@ -52,7 +53,7 @@ export default async function PlayerPage(ctx: PageProps<"/players/[id]">) {
           <div>
             <h1 className="text-3xl font-bold">{player.name}</h1>
             <p className="text-sm text-muted">
-              {POS[player.position]} · {player.team.flagEmoji}{" "}
+              {POS[player.position]} · <Flag country={player.team.country} />{" "}
               <a href={`/teams/${player.teamId}`} className="hover:text-sky-400">{player.team.name}</a>
               {player.age ? ` · ${player.age} yrs` : ""}
             </p>

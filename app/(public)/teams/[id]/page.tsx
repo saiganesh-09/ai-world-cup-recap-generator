@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ButtonLink } from "@/components/ui/button";
 import { Badge, Card, TeamCrest } from "@/components/ui/primitives";
+import { Flag } from "@/components/ui/flag";
 import { teamRepo } from "@/repositories/sports.repository";
 import { matchResult, teamStats } from "@/services/stats.service";
 
@@ -37,7 +38,7 @@ export default async function TeamPage(ctx: PageProps<"/teams/[id]">) {
         <div className="flex items-center gap-4">
           <TeamCrest short={team.shortName} color={team.primaryColor} size={64} />
           <div>
-            <h1 className="text-3xl font-bold">{team.flagEmoji} {team.name}</h1>
+            <h1 className="text-3xl font-bold flex items-center gap-3"><Flag country={team.country} size="lg" className="h-7 w-10" />{team.name}</h1>
             <p className="text-sm text-muted">
               {team.tournaments.map((t) => t.tournament.name).join(" · ")}
             </p>
@@ -83,7 +84,7 @@ export default async function TeamPage(ctx: PageProps<"/teams/[id]">) {
                     {STAGE_NAME[m.stage]}
                   </Badge>
                   <div className="flex-1">
-                    <span className="text-sm">vs {opp.flagEmoji} {opp.name}</span>
+                    <span className="text-sm flex items-center gap-2">vs <Flag country={opp.country} /> {opp.name}</span>
                     <p className="text-xs text-slate-500">
                       {new Date(m.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                       {m.venue ? ` · ${m.venue}` : ""}

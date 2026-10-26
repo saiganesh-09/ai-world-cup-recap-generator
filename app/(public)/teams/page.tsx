@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { SearchInput } from "@/components/search-input";
 import { Card, TeamCrest, Badge } from "@/components/ui/primitives";
+import { Flag } from "@/components/ui/flag";
 import { teamRepo, tournamentRepo } from "@/repositories/sports.repository";
 
 export const metadata: Metadata = { title: "Teams" };
@@ -52,7 +53,7 @@ export default async function TeamsPage({
             <Card hover className="flex items-center gap-3 p-4">
               <TeamCrest short={t.shortName} color={t.primaryColor} size={44} />
               <div className="min-w-0">
-                <p className="truncate font-semibold">{t.flagEmoji} {t.name}</p>
+                <p className="truncate font-semibold flex items-center gap-2"><Flag country={t.country} size="lg" />{t.name}</p>
                 <p className="text-xs text-slate-500">{t._count.players} players</p>
               </div>
             </Card>

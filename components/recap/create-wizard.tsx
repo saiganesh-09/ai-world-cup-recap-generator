@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge, Card, Input, TeamCrest } from "@/components/ui/primitives";
+import { Flag } from "@/components/ui/flag";
 
 // ── Types (serialized from server) ──────────────────────────
 interface Tournament {
@@ -25,6 +26,7 @@ interface Team {
   id: string;
   name: string;
   shortName: string;
+  country: string;
   flagEmoji: string | null;
   primaryColor: string;
 }
@@ -274,7 +276,8 @@ export function CreateWizard({ tournaments }: { tournaments: Tournament[] }) {
                   }`}
                 >
                   <TeamCrest short={t.shortName} color={t.primaryColor} size={34} />
-                  <span className="font-medium">{t.flagEmoji} {t.name}</span>
+                  <Flag country={t.country} size="lg" />
+                  <span className="font-medium">{t.name}</span>
                   {teamId === t.id && <Check size={16} className="ml-auto text-gold" />}
                 </button>
               ))}
