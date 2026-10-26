@@ -42,7 +42,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${geistSans.variable} h-full`}>
+    <html lang="en" className={`${geistSans.variable} h-full`} suppressHydrationWarning>
       <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );
