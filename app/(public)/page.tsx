@@ -95,7 +95,7 @@ export default async function HomePage() {
           <p className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-sky-400/30 bg-sky-400/10 px-4 py-1.5 text-xs font-medium text-sky-300">
             <Sparkles size={14} /> AI-powered · Video · Statistics
           </p>
-          <h1 className="mx-auto max-w-4xl text-6xl font-extrabold tracking-tight sm:text-7xl lg:text-8xl">
+          <h1 className="mx-auto max-w-3xl text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
             Your World Cup.
             <br />
             <span className="bg-gradient-to-r from-gold via-amber-300 to-emerald-400 bg-clip-text text-transparent">
